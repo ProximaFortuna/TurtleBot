@@ -10,6 +10,10 @@ import numpy as np
 #                  DO NOT MODIFY FUNCTION NAMES OR ARGUMENTS
 # ------------------------------------------------------------------------------
 
+# RUN WITH
+# python3 {path}/model_grader.py --data_path {path}/2026F_imgs/
+# Must have model in same folder as this file or also include --model_path {Path to model}/signs_resnet18.onnx
+
 def initialize_model(model_path=None):
     """
     Initialize and return your trained model.
@@ -22,13 +26,10 @@ def initialize_model(model_path=None):
         model: Your trained model.
     """
 
-    # TODO: Load your trained model here.
-    # For example, if you saved your model using pickle or a deep learning framework,
-    # load it and return the model object.
-    
-    model = None
+    if model_path is None:
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'signs_resnet18.onnx')
 
-    raise NotImplementedError("initialize_model() is not implemented. Please implement this function.")
+    model = cv2.dnn.readNetFromONNX(model_path)
 
     return model
 
@@ -46,13 +47,13 @@ def predict(model, image):
         int: The predicted class label.
     """
 
-    # TODO: Implement your model's prediction logic here.
-    # The function should return an integer corresponding to the predicted class.
-    
-    prediction = None
-    
-    raise NotImplementedError("predict() is not implemented. Please implement this function.")
-    
+    mean = np.array([0.485, 0.456, 0.406], np.float32) # ImageNet normalization mean
+    std = np.array([0.229, 0.224, 0.225], np.float32) # ImageNet normalization std
+    W, H = 224, 168 # Width and Height of the input images for resnet18
+    img = cv2.cvtColor(cv2.resize(image, (W, H), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2RGB) # Resize Image and put in RGB
+    blob = ((img.astype(np.float32) / 255.0 - mean) / std).transpose(2, 0, 1)[None] # Transform the data to what Resnet18 wants
+    model.setInput(blob)
+    prediction = int(np.argmax(model.forward()))
     return prediction
 
 # ------------------------------------------------------------------------------
